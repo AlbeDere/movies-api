@@ -11,8 +11,10 @@ public class Actor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
-    private LocalDate birthDate; // in ISO 8601 format
+
+    private LocalDate birthDate;
 
     @ManyToMany(mappedBy = "actors")
     private Set<Movie> movies = new HashSet<>();

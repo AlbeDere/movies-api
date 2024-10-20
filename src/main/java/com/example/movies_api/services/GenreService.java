@@ -2,15 +2,15 @@ package com.example.movies_api.services;
 
 import com.example.movies_api.entities.Genre;
 import com.example.movies_api.repositories.GenreRepository;
+
+import org.apache.velocity.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class GenreService {
-
     @Autowired
     private GenreRepository genreRepository;
 
@@ -22,12 +22,14 @@ public class GenreService {
         return genreRepository.findAll();
     }
 
-    public Optional<Genre> getGenreById(Long id) {
-        return genreRepository.findById(id);
+    public Genre getGenreById(Long id) {
+        return genreRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Genre not found"));
     }
 
-    public Genre updateGenre(Long id, Genre genre) {
-        genre.setId(id);
+    public Genre updateGenre(Long id, Genre updatedGenre) {
+        Genre genre = getGenreById(id);
+        genre.setName(updatedGenre.getName());
         return genreRepository.save(genre);
     }
 

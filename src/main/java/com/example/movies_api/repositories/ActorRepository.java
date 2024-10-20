@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ActorRepository extends JpaRepository<Actor, Long> {
-    List<Actor> findByNameContaining(String name); // Custom query method
+    List<Actor> findByNameContainingIgnoreCase(String name);
 }

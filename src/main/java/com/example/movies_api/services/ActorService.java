@@ -1,18 +1,16 @@
 package com.example.movies_api.services;
 
 import com.example.movies_api.entities.Actor;
-import com.example.movies_api.entities.Movie;
 import com.example.movies_api.repositories.ActorRepository;
+
+import org.apache.velocity.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ActorService {
-
     @Autowired
     private ActorRepository actorRepository;
 
@@ -24,25 +22,23 @@ public class ActorService {
         return actorRepository.findAll();
     }
 
-    public Optional<Actor> getActorById(Long id) {
-        return actorRepository.findById(id);
+    public Actor getActorById(Long id) {
+        return actorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Actor not found"));
     }
 
     public List<Actor> getActorsByName(String name) {
-        return actorRepository.findByNameContaining(name);
+        return actorRepository.findByNameContainingIgnoreCase(name);
     }
 
-    public Actor updateActor(Long id, Actor actor) {
-        actor.setId(id);
+    public Actor updateActor(Long id, Actor updatedActor) {
+        Actor actor = getActorById(id);
+        actor.setName(updatedActor.getName());
+        actor.setBirthDate(updatedActor.getBirthDate());
         return actorRepository.save(actor);
     }
 
     public void deleteActor(Long id) {
         actorRepository.deleteById(id);
-    }
-
-    public List<Movie> getMoviesByActor(Long actorId) {
-        Actor actor = actorRepository.findById(actorId).orElse(null);
-        return actor != null ? new ArrayList<>(actor.getMovies()) : null;
     }
 }
