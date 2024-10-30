@@ -11,7 +11,6 @@ public class Actor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String name;
 
     private LocalDate birthDate;
@@ -19,7 +18,15 @@ public class Actor {
     @ManyToMany(mappedBy = "actors")
     private Set<Movie> movies = new HashSet<>();
 
-    // Getters and Setters
+    // Constructors, Getters and Setters
+    public Actor() {
+    }
+
+    public Actor(String name, LocalDate birthDate) {
+        this.name = name;
+        this.birthDate = birthDate;
+    }
+
     public Long getId() {
         return id;
     }

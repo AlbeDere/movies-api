@@ -10,13 +10,19 @@ public class Genre {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
     private String name;
 
     @ManyToMany(mappedBy = "genres")
     private Set<Movie> movies = new HashSet<>();
 
-    // Getters and Setters
+    // Constructors, Getters and Setters
+    public Genre() {
+    }
+
+    public Genre(String name) {
+        this.name = name;
+    }
+
     public Long getId() {
         return id;
     }

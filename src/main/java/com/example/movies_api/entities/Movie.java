@@ -10,27 +10,38 @@ public class Movie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String title;
 
     private int releaseYear;
+
     private int duration;
 
     @ManyToMany
     @JoinTable(
         name = "movie_genre",
         joinColumns = @JoinColumn(name = "movie_id"),
-        inverseJoinColumns = @JoinColumn(name = "genre_id"))
+        inverseJoinColumns = @JoinColumn(name = "genre_id")
+    )
     private Set<Genre> genres = new HashSet<>();
 
     @ManyToMany
     @JoinTable(
         name = "movie_actor",
         joinColumns = @JoinColumn(name = "movie_id"),
-        inverseJoinColumns = @JoinColumn(name = "actor_id"))
+        inverseJoinColumns = @JoinColumn(name = "actor_id")
+    )
     private Set<Actor> actors = new HashSet<>();
 
-    // Getters and Setters
+    // Constructors, Getters and Setters
+    public Movie() {
+    }
+
+    public Movie(String title, int releaseYear, int duration) {
+        this.title = title;
+        this.releaseYear = releaseYear;
+        this.duration = duration;
+    }
+
     public Long getId() {
         return id;
     }

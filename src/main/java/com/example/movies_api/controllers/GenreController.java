@@ -3,38 +3,52 @@ package com.example.movies_api.controllers;
 import com.example.movies_api.entities.Genre;
 import com.example.movies_api.services.GenreService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/genres")
 public class GenreController {
+
+    private final GenreService genreService;
+
     @Autowired
-    private GenreService genreService;
+    public GenreController(GenreService genreService) {
+        this.genreService = genreService;
+    }
 
     @PostMapping
-    public Genre createGenre(@RequestBody Genre genre) {
-        return genreService.createGenre(genre);
+    public ResponseEntity<Genre> createGenre(@RequestBody Genre genre) {
+        Genre createdGenre = genreService.createGenre(genre);
+        return ResponseEntity.ok(createdGenre);
     }
 
     @GetMapping
-    public List<Genre> getAllGenres() {
-        return genreService.getAllGenres();
+    public ResponseEntity<List<Genre>> getAllGenres() {
+        List<Genre> genres = genreService.getAllGenres();
+        return ResponseEntity.ok(genres);
     }
 
     @GetMapping("/{id}")
-    public Genre getGenreById(@PathVariable Long id) {
-        return genreService.getGenreById(id);
+    public ResponseEntity<Genre> getGenreById(@PathVariable Long id) {
+        Optional<Genre> genre = genreService.getGenreById(id);
+        return genre.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}")
-    public Genre updateGenre(@PathVariable Long id, @RequestBody Genre updatedGenre) {
-        return genreService.updateGenre(id, updatedGenre);
+    public ResponseEntity<Genre> updateGenre(@PathVariable Long id, @RequestBody Genre genre) {
+        Optional<Genre> updatedGenre = genreService.updateGenre(id, genre.getName());
+        return updatedGenre.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public void deleteGenre(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteGenre(@PathVariable Long id) {
         genreService.deleteGenre(id);
+        return ResponseEntity.noContent().build();
     }
 }
