@@ -3,6 +3,7 @@ package com.example.movies_api.services;
 import com.example.movies_api.entities.Actor;
 import com.example.movies_api.entities.Genre;
 import com.example.movies_api.entities.Movie;
+import com.example.movies_api.exceptions.ResourceNotFoundException;
 import com.example.movies_api.repositories.MovieRepository;
 import com.example.movies_api.repositories.GenreRepository;
 import com.example.movies_api.repositories.ActorRepository;
@@ -32,16 +33,20 @@ public class MovieService {
     public Movie createMovie(Movie movie, List<Long> genreIds, List<Long> actorIds) {
         Set<Genre> genres = new HashSet<>();
         for (Long genreId : genreIds) {
-            genreRepository.findById(genreId).ifPresent(genres::add);
+            Genre genre = genreRepository.findById(genreId)
+                .orElseThrow(() -> new ResourceNotFoundException("Genre with id " + genreId + " not found"));
+            genres.add(genre);
         }
         movie.setGenres(genres);
-
+    
         Set<Actor> actors = new HashSet<>();
         for (Long actorId : actorIds) {
-            actorRepository.findById(actorId).ifPresent(actors::add);
+            Actor actor = actorRepository.findById(actorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Actor with id " + actorId + " not found"));
+            actors.add(actor);
         }
         movie.setActors(actors);
-
+    
         return movieRepository.save(movie);
     }
 
@@ -51,67 +56,88 @@ public class MovieService {
     }
 
     // Retrieve a specific movie by ID
-    public Optional<Movie> getMovieById(Long id) {
-        return movieRepository.findById(id);
-    }
+    public Movie getMovieById(Long id) {
+        return movieRepository.findById(id).orElseThrow(() -> 
+        new ResourceNotFoundException("Movie with id " + id + " not found"));
+}
 
     // Filter movies by genre
     public List<Movie> getMoviesByGenre(Long genreId) {
+        // Check if the genre exists
+        genreRepository.findById(genreId).orElseThrow(() -> 
+            new ResourceNotFoundException("Genre with id " + genreId + " not found"));
+        
+        // If the genre exists, retrieve movies associated with it
         return movieRepository.findAll().stream()
             .filter(movie -> movie.getGenres().stream().anyMatch(genre -> genre.getId().equals(genreId)))
             .toList();
     }
+    
 
     // Filter movies by release year
     public List<Movie> getMoviesByReleaseYear(int releaseYear) {
-        return movieRepository.findAll().stream()
+        List<Movie> movies = movieRepository.findAll().stream()
             .filter(movie -> movie.getReleaseYear() == releaseYear)
             .toList();
+    
+        // If no movies are found for the specified release year, throw an exception
+        if (movies.isEmpty()) {
+            throw new ResourceNotFoundException("No movies found for release year " + releaseYear);
+        }
+    
+        return movies;
     }
+    
 
     // Get all actors in a specific movie
     public Set<Actor> getActorsByMovie(Long movieId) {
-        return movieRepository.findById(movieId)
-            .map(Movie::getActors)
-            .orElseGet(Set::of);
+        Movie movie = movieRepository.findById(movieId)
+            .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + movieId + " not found"));
+        return movie.getActors();
     }
     
+    
     public List<Movie> getMoviesByActor(Long actorId) {
-        Optional<Actor> actor = actorRepository.findById(actorId);
-        if (actor.isPresent()) {
-            return actor.get().getMovies().stream().toList();
-        }
-        return List.of();
+        Actor actor = actorRepository.findById(actorId)
+            .orElseThrow(() -> new ResourceNotFoundException("Actor with id " + actorId + " not found"));
+        return actor.getMovies().stream().toList();
     }
+    
 
     // Update movie details
     public Optional<Movie> updateMovie(Long id, Movie updatedMovie, List<Long> genreIds, List<Long> actorIds) {
-        Optional<Movie> existingMovieOptional = movieRepository.findById(id);
-        if (existingMovieOptional.isPresent()) {
-            Movie existingMovie = existingMovieOptional.get();
-            existingMovie.setTitle(updatedMovie.getTitle());
-            existingMovie.setReleaseYear(updatedMovie.getReleaseYear());
-            existingMovie.setDuration(updatedMovie.getDuration());
-
-            Set<Genre> genres = new HashSet<>();
-            for (Long genreId : genreIds) {
-                genreRepository.findById(genreId).ifPresent(genres::add);
-            }
-            existingMovie.setGenres(genres);
-
-            Set<Actor> actors = new HashSet<>();
-            for (Long actorId : actorIds) {
-                actorRepository.findById(actorId).ifPresent(actors::add);
-            }
-            existingMovie.setActors(actors);
-
-            return Optional.of(movieRepository.save(existingMovie));
+        Movie existingMovie = movieRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + id + " not found"));
+    
+        existingMovie.setTitle(updatedMovie.getTitle());
+        existingMovie.setReleaseYear(updatedMovie.getReleaseYear());
+        existingMovie.setDuration(updatedMovie.getDuration());
+    
+        Set<Genre> genres = new HashSet<>();
+        for (Long genreId : genreIds) {
+            Genre genre = genreRepository.findById(genreId)
+                .orElseThrow(() -> new ResourceNotFoundException("Genre with id " + genreId + " not found"));
+            genres.add(genre);
         }
-        return Optional.empty();
+        existingMovie.setGenres(genres);
+    
+        Set<Actor> actors = new HashSet<>();
+        for (Long actorId : actorIds) {
+            Actor actor = actorRepository.findById(actorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Actor with id " + actorId + " not found"));
+            actors.add(actor);
+        }
+        existingMovie.setActors(actors);
+    
+        return Optional.of(movieRepository.save(existingMovie));
     }
+
 
     // Remove a movie
     public void deleteMovie(Long id) {
+        if (!movieRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Movie with id " + id + " not found");
+        }
         movieRepository.deleteById(id);
     }
 }

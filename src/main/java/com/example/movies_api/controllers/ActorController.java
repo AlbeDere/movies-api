@@ -2,11 +2,12 @@ package com.example.movies_api.controllers;
 
 import com.example.movies_api.entities.Actor;
 import com.example.movies_api.entities.Movie;
+import com.example.movies_api.exceptions.ResourceNotFoundException;
 import com.example.movies_api.services.ActorService;
 
 import jakarta.validation.Valid;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,45 +28,55 @@ public class ActorController {
         this.actorService = actorService;
     }
 
+    // Create a new actor
     @PostMapping
     public ResponseEntity<Actor> createActor(@Validated @RequestBody Actor actor) {
         Actor createdActor = actorService.createActor(actor);
-        return ResponseEntity.ok(createdActor);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdActor); // HTTP 201 Created
     }
 
+    // Get all actors or filter by name
     @GetMapping
     public ResponseEntity<List<Actor>> getAllActors(@RequestParam(required = false) String name) {
         if (name != null) {
-            return ResponseEntity.ok(actorService.getActorsByName(name));
+            List<Actor> actors = actorService.getActorsByName(name);
+            return ResponseEntity.ok(actors);
         }
         List<Actor> actors = actorService.getAllActors();
         return ResponseEntity.ok(actors);
     }
 
+    // Retrieve a specific actor by ID
     @GetMapping("/{id}")
     public ResponseEntity<Actor> getActorById(@PathVariable Long id) {
-        Optional<Actor> actor = actorService.getActorById(id);
-        return actor.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Actor actor = actorService.getActorById(id); // Throws ResourceNotFoundException if not found
+        return ResponseEntity.ok(actor); // Directly return the actor
     }
 
+    // Update actor details
+// Update actor details
     @PatchMapping("/{id}")
     public ResponseEntity<Actor> updateActor(@PathVariable Long id, @Valid @RequestBody Actor updatedActor) {
+        // Attempt to update the actor
         Optional<Actor> actor = actorService.updateActor(id, updatedActor);
-        return actor.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        
+        // Return updated actor with HTTP 200 OK if found, otherwise return HTTP 404 Not Found
+        return actor.map(ResponseEntity::ok) // HTTP 200 OK
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build()); // HTTP 404 Not Found
     }
 
+
+    // Delete an actor
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteActor(@PathVariable Long id) {
-        actorService.deleteActor(id);
+        actorService.deleteActor(id); // Throws ResourceNotFoundException if not found
         return ResponseEntity.noContent().build();
     }
 
+    // Get all movies an actor has appeared in
     @GetMapping("/{actorId}/movies")
     public ResponseEntity<List<Movie>> getMoviesByActor(@PathVariable Long actorId) {
-        Set<Movie> movies = actorService.getMoviesByActor(actorId);
-        // Convert Set<Movie> to List<Movie>
+        Set<Movie> movies = actorService.getMoviesByActor(actorId); // Throws ResourceNotFoundException if not found
         List<Movie> movieList = new ArrayList<>(movies);
         return ResponseEntity.ok(movieList);
     }

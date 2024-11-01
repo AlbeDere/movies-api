@@ -1,15 +1,13 @@
 package com.example.movies_api.services;
 
 import com.example.movies_api.entities.Genre;
-import com.example.movies_api.entities.Movie;
+import com.example.movies_api.exceptions.ResourceNotFoundException;
 import com.example.movies_api.repositories.GenreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class GenreService {
@@ -32,29 +30,25 @@ public class GenreService {
     }
 
     // Retrieve a specific genre by ID
-    public Optional<Genre> getGenreById(Long id) {
-        return genreRepository.findById(id);
+    public Genre getGenreById(Long id) {
+        return genreRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Genre with id " + id + " not found"));
     }
 
     // Update an existing genre's name
     public Optional<Genre> updateGenre(Long id, String newName) {
-        Optional<Genre> genreOptional = genreRepository.findById(id);
-        if (genreOptional.isPresent()) {
-            Genre genre = genreOptional.get();
+        return genreRepository.findById(id).map(genre -> {
             genre.setName(newName);
-            return Optional.of(genreRepository.save(genre));
-        }
-        return Optional.empty();
+            return genreRepository.save(genre);
+        });
     }
 
     // Remove a genre from the database
     public void deleteGenre(Long id) {
+        if (!genreRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Genre with id " + id + " not found");
+        }
         genreRepository.deleteById(id);
     }
 
-    // Fetch all movies in a specific genre (optional)
-    public List<Movie> getMoviesByGenre(Long genreId) {
-        Optional<Genre> genreOptional = genreRepository.findById(genreId);
-        return genreOptional.map(genre -> genre.getMovies().stream().collect(Collectors.toList())).orElseGet(LinkedList::new);
-    }
 }
