@@ -1,6 +1,10 @@
 package com.example.movies_api.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,10 +14,14 @@ public class Movie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Title cannot be empty")
+    @Size(min = 1, max = 100, message = "Title must be between 1 and 100 characters")
     private String title;
 
+    @NotNull(message = "Release year cannot be null")
     private int releaseYear;
 
+    @NotNull(message = "Duration cannot be null")
     private int duration;
 
     @ManyToMany

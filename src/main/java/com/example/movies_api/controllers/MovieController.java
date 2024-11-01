@@ -3,6 +3,9 @@ package com.example.movies_api.controllers;
 import com.example.movies_api.entities.Actor;
 import com.example.movies_api.entities.Movie;
 import com.example.movies_api.services.MovieService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +27,7 @@ public class MovieController {
     }
 
     @PostMapping
-    public ResponseEntity<Movie> createMovie(@RequestBody Movie movie,
+    public ResponseEntity<Movie> createMovie(@Valid @RequestBody Movie movie,
                                               @RequestParam List<Long> genreIds,
                                               @RequestParam List<Long> actorIds) {
         Movie createdMovie = movieService.createMovie(movie, genreIds, actorIds);
@@ -54,7 +57,7 @@ public class MovieController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Movie> updateMovie(@PathVariable Long id, @RequestBody Movie updatedMovie,
+    public ResponseEntity<Movie> updateMovie(@PathVariable Long id, @Valid @RequestBody Movie updatedMovie,
                                               @RequestParam List<Long> genreIds,
                                               @RequestParam List<Long> actorIds) {
         Optional<Movie> movie = movieService.updateMovie(id, updatedMovie, genreIds, actorIds);

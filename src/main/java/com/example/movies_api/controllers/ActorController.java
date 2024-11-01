@@ -3,8 +3,12 @@ package com.example.movies_api.controllers;
 import com.example.movies_api.entities.Actor;
 import com.example.movies_api.entities.Movie;
 import com.example.movies_api.services.ActorService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -24,7 +28,7 @@ public class ActorController {
     }
 
     @PostMapping
-    public ResponseEntity<Actor> createActor(@RequestBody Actor actor) {
+    public ResponseEntity<Actor> createActor(@Validated @RequestBody Actor actor) {
         Actor createdActor = actorService.createActor(actor);
         return ResponseEntity.ok(createdActor);
     }
@@ -46,7 +50,7 @@ public class ActorController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Actor> updateActor(@PathVariable Long id, @RequestBody Actor updatedActor) {
+    public ResponseEntity<Actor> updateActor(@PathVariable Long id, @Valid @RequestBody Actor updatedActor) {
         Optional<Actor> actor = actorService.updateActor(id, updatedActor);
         return actor.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

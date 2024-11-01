@@ -2,6 +2,9 @@ package com.example.movies_api.controllers;
 
 import com.example.movies_api.entities.Genre;
 import com.example.movies_api.services.GenreService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +24,8 @@ public class GenreController {
     }
 
     @PostMapping
-    public ResponseEntity<Genre> createGenre(@RequestBody Genre genre) {
+    
+    public ResponseEntity<Genre> createGenre(@Valid @RequestBody Genre genre) {
         Genre createdGenre = genreService.createGenre(genre);
         return ResponseEntity.ok(createdGenre);
     }
@@ -40,7 +44,7 @@ public class GenreController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Genre> updateGenre(@PathVariable Long id, @RequestBody Genre genre) {
+    public ResponseEntity<Genre> updateGenre(@PathVariable Long id, @Valid @RequestBody Genre genre) {
         Optional<Genre> updatedGenre = genreService.updateGenre(id, genre.getName());
         return updatedGenre.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
