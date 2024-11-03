@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,9 +65,14 @@ public class MovieController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
-        movieService.deleteMovie(id);
-        return ResponseEntity.noContent().build(); // HTTP 204 No Content
+    public ResponseEntity<String> deleteMovie(@PathVariable Long id, 
+                                              @RequestParam(defaultValue = "false") boolean force) {
+        try {
+            movieService.deleteMovie(id, force);
+            return ResponseEntity.noContent().build(); // HTTP 204 No Content for successful deletion
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason()); // HTTP 400 Bad Request for relationship conflict
+        }
     }
 
     @GetMapping("/{movieId}/actors")

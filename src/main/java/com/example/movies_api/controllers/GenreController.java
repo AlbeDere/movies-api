@@ -57,10 +57,15 @@ public class GenreController {
     }
     
 
-    // Delete a genre
+    // Delete a genre with an option for forced deletion
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteGenre(@PathVariable Long id) {
-        genreService.deleteGenre(id);  // Service handles exception if genre does not exist
-        return ResponseEntity.noContent().build();  // Returns 204 No Content on successful deletion
+    public ResponseEntity<String> deleteGenre(@PathVariable Long id, 
+                                            @RequestParam(defaultValue = "false") boolean force) {
+        try {
+            genreService.deleteGenre(id, force);
+            return ResponseEntity.noContent().build(); // HTTP 204 No Content for successful deletion
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage()); // HTTP 400 Bad Request for relationship conflict
+        }
     }
 }

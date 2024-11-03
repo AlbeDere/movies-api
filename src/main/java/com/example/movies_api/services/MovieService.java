@@ -8,7 +8,9 @@ import com.example.movies_api.repositories.MovieRepository;
 import com.example.movies_api.repositories.GenreRepository;
 import com.example.movies_api.repositories.ActorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -134,10 +136,44 @@ public class MovieService {
 
 
     // Remove a movie
-    public void deleteMovie(Long id) {
-        if (!movieRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Movie with id " + id + " not found");
+    public void deleteMovie(Long id, boolean force) {
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + id + " not found"));
+
+        // Check for associated actors and genres
+        boolean hasAssociations = !movie.getActors().isEmpty() || !movie.getGenres().isEmpty();
+
+        // If force is false and associations exist, prevent deletion
+        if (!force && hasAssociations) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                    "Cannot delete movie '" + movie.getTitle() + 
+                    "' because it has associated actors and genres. " +
+                    "Use force deletion to remove associations.");
         }
+
+        // If force is true, clear associations
+        if (force) {
+            // Remove the movie from each actor's movie list
+            for (Actor actor : movie.getActors()) {
+                actor.getMovies().remove(movie);
+                actorRepository.save(actor); // Update actor in the database
+            }
+
+            // Remove the movie from each genre's movie list
+            for (Genre genre : movie.getGenres()) {
+                genre.getMovies().remove(movie);
+                genreRepository.save(genre); // Update genre in the database
+            }
+
+            // Clear movie's own lists of actors and genres
+            movie.getActors().clear();
+            movie.getGenres().clear();
+
+            // Update the movie without any associations
+            movieRepository.save(movie);
+        }
+
+        // Delete the movie
         movieRepository.deleteById(id);
     }
 }

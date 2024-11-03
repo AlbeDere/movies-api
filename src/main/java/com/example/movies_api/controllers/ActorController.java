@@ -2,14 +2,12 @@ package com.example.movies_api.controllers;
 
 import com.example.movies_api.entities.Actor;
 import com.example.movies_api.entities.Movie;
-import com.example.movies_api.exceptions.ResourceNotFoundException;
 import com.example.movies_api.services.ActorService;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -30,7 +28,7 @@ public class ActorController {
 
     // Create a new actor
     @PostMapping
-    public ResponseEntity<Actor> createActor(@Validated @RequestBody Actor actor) {
+    public ResponseEntity<Actor> createActor(@Valid @RequestBody Actor actor) {
         Actor createdActor = actorService.createActor(actor);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdActor); // HTTP 201 Created
     }
@@ -68,9 +66,14 @@ public class ActorController {
 
     // Delete an actor
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteActor(@PathVariable Long id) {
-        actorService.deleteActor(id); // Throws ResourceNotFoundException if not found
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<String> deleteActor(@PathVariable Long id, 
+                                            @RequestParam(defaultValue = "false") boolean force) {
+        try {
+            actorService.deleteActor(id, force);
+            return ResponseEntity.noContent().build(); // HTTP 204 No Content for successful deletion
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage()); // HTTP 400 Bad Request for relationship conflict
+        }
     }
 
     // Get all movies an actor has appeared in

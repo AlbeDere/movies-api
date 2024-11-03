@@ -82,9 +82,24 @@ public class ActorService {
     }
 
     // Remove an actor from the database
-    public void deleteActor(Long id) {
-        if (!actorRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Actor with id " + id + " not found");
+    public void deleteActor(Long id, boolean force) {
+        Actor actor = actorRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Actor with id " + id + " not found"));
+
+        // Check for associated movies
+        List<Movie> associatedActor = actor.getMovies().stream().toList();
+
+        // If force is false and there are associated movies, prevent deletion
+        if (!force && !associatedActor.isEmpty()) {
+            throw new IllegalStateException("Cannot delete actor '" + actor.getName() + 
+                                            "' because it has " + associatedActor.size() + " associated movies.");
+        }
+
+        if (force) {
+            for (Movie movie : associatedActor) {
+                movie.getActors().remove(actor);  // Remove actor from movie's actor list
+                movieRepository.save(movie);      // Update movie in the database
+            }
         }
         actorRepository.deleteById(id);
     }
