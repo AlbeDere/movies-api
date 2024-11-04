@@ -7,6 +7,8 @@ import com.example.movies_api.repositories.ActorRepository;
 import com.example.movies_api.repositories.MovieRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,9 +31,9 @@ public class ActorService {
         return actorRepository.save(actor);
     }
 
-    // Retrieve all actors
-    public List<Actor> getAllActors() {
-        return actorRepository.findAll();
+    // Retrieve all actors with pagination
+    public Page<Actor> getAllActors(Pageable pageable) {
+        return actorRepository.findAll(pageable);
     }
 
     // Retrieve a specific actor by ID

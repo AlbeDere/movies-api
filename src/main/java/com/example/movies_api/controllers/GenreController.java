@@ -4,7 +4,9 @@ import com.example.movies_api.entities.Genre;
 import com.example.movies_api.services.GenreService;
 
 import jakarta.validation.Valid;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,11 +33,14 @@ public class GenreController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdGenre); // HTTP 201 Created
     }
 
-    // Retrieve all genres
+    // Retrieve all genres with pagination
     @GetMapping
-    public ResponseEntity<List<Genre>> getAllGenres() {
-        List<Genre> genres = genreService.getAllGenres();
-        return ResponseEntity.ok(genres);
+    public ResponseEntity<List<Genre>> getAllGenres(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Genre> genres = genreService.getAllGenres(pageable);
+        return ResponseEntity.ok(genres.getContent()); // Returns paginated genres
     }
 
     // Retrieve a specific genre by ID

@@ -7,6 +7,8 @@ import com.example.movies_api.repositories.GenreRepository;
 import com.example.movies_api.repositories.MovieRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,8 +31,8 @@ public class GenreService {
     }
 
     // Retrieve all genres
-    public List<Genre> getAllGenres() {
-        return genreRepository.findAll();
+    public Page<Genre> getAllGenres(Pageable pageable) {
+        return genreRepository.findAll(pageable);
     }
 
     // Retrieve a specific genre by ID

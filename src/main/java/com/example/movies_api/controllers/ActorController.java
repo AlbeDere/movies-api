@@ -3,7 +3,9 @@ package com.example.movies_api.controllers;
 import com.example.movies_api.entities.Actor;
 import com.example.movies_api.entities.Movie;
 import com.example.movies_api.services.ActorService;
-
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,15 +35,14 @@ public class ActorController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdActor); // HTTP 201 Created
     }
 
-    // Get all actors or filter by name
+    // Get all actors with pagination
     @GetMapping
-    public ResponseEntity<List<Actor>> getAllActors(@RequestParam(required = false) String name) {
-        if (name != null) {
-            List<Actor> actors = actorService.getActorsByName(name);
-            return ResponseEntity.ok(actors);
-        }
-        List<Actor> actors = actorService.getAllActors();
-        return ResponseEntity.ok(actors);
+    public ResponseEntity<List<Actor>> getAllActors(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Actor> actorPage = actorService.getAllActors(pageable);
+        return ResponseEntity.ok(actorPage.getContent()); // Returns only the content of the paginated actors
     }
 
     // Retrieve a specific actor by ID

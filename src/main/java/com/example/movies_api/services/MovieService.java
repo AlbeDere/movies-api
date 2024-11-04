@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -52,9 +54,9 @@ public class MovieService {
         return movieRepository.save(movie);
     }
 
-    // Retrieve all movies
-    public List<Movie> getAllMovies() {
-        return movieRepository.findAll();
+    // Retrieve all movies with pagination
+    public Page<Movie> getAllMovies(Pageable pageable) {
+        return movieRepository.findAll(pageable);
     }
 
     // Retrieve a specific movie by ID
@@ -63,30 +65,24 @@ public class MovieService {
         new ResourceNotFoundException("Movie with id " + id + " not found"));
 }
 
-    // Filter movies by genre
-    public List<Movie> getMoviesByGenre(Long genreId) {
-        // Check if the genre exists
+
+    // Filter movies by genre with pagination
+    public Page<Movie> getMoviesByGenre(Long genreId, Pageable pageable) {
         genreRepository.findById(genreId).orElseThrow(() -> 
             new ResourceNotFoundException("Genre with id " + genreId + " not found"));
-        
-        // If the genre exists, retrieve movies associated with it
-        return movieRepository.findAll().stream()
-            .filter(movie -> movie.getGenres().stream().anyMatch(genre -> genre.getId().equals(genreId)))
-            .toList();
+        return movieRepository.findByGenres_Id(genreId, pageable);
     }
     
 
-    // Filter movies by release year
-    public List<Movie> getMoviesByReleaseYear(int releaseYear) {
-        List<Movie> movies = movieRepository.findAll().stream()
-            .filter(movie -> movie.getReleaseYear() == releaseYear)
-            .toList();
-    
+    // Filter movies by release year with pagination and exception handling
+    public Page<Movie> getMoviesByReleaseYear(int releaseYear, Pageable pageable) {
+        Page<Movie> movies = movieRepository.findByReleaseYear(releaseYear, pageable);
+        
         // If no movies are found for the specified release year, throw an exception
         if (movies.isEmpty()) {
             throw new ResourceNotFoundException("No movies found for release year " + releaseYear);
         }
-    
+        
         return movies;
     }
     
@@ -99,10 +95,11 @@ public class MovieService {
     }
     
     
-    public List<Movie> getMoviesByActor(Long actorId) {
-        Actor actor = actorRepository.findById(actorId)
-            .orElseThrow(() -> new ResourceNotFoundException("Actor with id " + actorId + " not found"));
-        return actor.getMovies().stream().toList();
+    // Filter movies by actor with pagination
+    public Page<Movie> getMoviesByActor(Long actorId, Pageable pageable) {
+        actorRepository.findById(actorId).orElseThrow(() -> 
+            new ResourceNotFoundException("Actor with id " + actorId + " not found"));
+        return movieRepository.findByActors_Id(actorId, pageable);
     }
     
 

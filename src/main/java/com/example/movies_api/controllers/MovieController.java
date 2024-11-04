@@ -9,6 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,18 +38,29 @@ public class MovieController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Movie>> getAllMovies(@RequestParam(required = false) Long genre,
-                                                    @RequestParam(required = false) Integer year,
-                                                    @RequestParam(required = false) Long actor) {
+    public ResponseEntity<List<Movie>> getAllMovies(
+            @RequestParam(required = false) Long genre,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Long actor,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Movie> moviePage;
+        
+        // Use different service methods depending on the filter criteria provided
         if (genre != null) {
-            return ResponseEntity.ok(movieService.getMoviesByGenre(genre));
+            moviePage = movieService.getMoviesByGenre(genre, pageable);
         } else if (year != null) {
-            return ResponseEntity.ok(movieService.getMoviesByReleaseYear(year));
+            moviePage = movieService.getMoviesByReleaseYear(year, pageable);
         } else if (actor != null) {
-            return ResponseEntity.ok(movieService.getMoviesByActor(actor));
+            moviePage = movieService.getMoviesByActor(actor, pageable);
+        } else {
+            moviePage = movieService.getAllMovies(pageable);
         }
-        List<Movie> movies = movieService.getAllMovies();
-        return ResponseEntity.ok(movies); // HTTP 200 OK
+        
+        // Return only the content of the Page<Movie> object for a cleaner response
+        return ResponseEntity.ok(moviePage.getContent());
     }
 
     @GetMapping("/{id}")
