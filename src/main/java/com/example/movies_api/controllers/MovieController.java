@@ -2,6 +2,7 @@ package com.example.movies_api.controllers;
 
 import com.example.movies_api.entities.Actor;
 import com.example.movies_api.entities.Movie;
+import com.example.movies_api.exceptions.ResourceNotFoundException;
 import com.example.movies_api.services.MovieService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -99,4 +101,40 @@ public class MovieController {
         
         return ResponseEntity.ok(actors.getContent());
     }
+
+    // Search movies by title endpoint
+    @GetMapping("/search")
+    public ResponseEntity<?> searchMoviesByTitle(
+            @RequestParam String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        // Validate that the title is not empty
+        if (title == null || title.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("message", "Title parameter cannot be empty."));
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        try {
+            // Search movies by title
+            Page<Movie> moviePage = movieService.searchMoviesByTitle(title, pageable);
+
+            // If no movies are found, return a message with a 404 status
+            if (moviePage.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("message", "No movies found matching the title: " + title));
+            }
+
+            // Return the list of movies if found
+            return ResponseEntity.ok(moviePage.getContent());
+
+        } catch (ResourceNotFoundException e) {
+            // Return 404 with custom message if ResourceNotFoundException is thrown
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("message", e.getMessage()));
+        }
+    }
+
 }

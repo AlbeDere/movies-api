@@ -184,4 +184,14 @@ public class MovieService {
         // Delete the movie
         movieRepository.deleteById(id);
     }
+    // Search movies by title with case-insensitive partial match
+    public Page<Movie> searchMoviesByTitle(String title, Pageable pageable) {
+        Page<Movie> movies = movieRepository.findByTitleContainingIgnoreCase(title, pageable);
+    
+        if (movies.isEmpty()) {
+            throw new ResourceNotFoundException("No movies found matching the title: " + title);
+        }
+    
+        return movies;
+    }
 }
