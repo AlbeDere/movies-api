@@ -25,23 +25,19 @@ public class ActorService {
         this.movieRepository = movieRepository;
     }
 
-    // Create a new actor
     public Actor createActor(Actor actor) {
         return actorRepository.save(actor);
     }
 
-    // Retrieve all actors with pagination
     public Page<Actor> getAllActors(Pageable pageable) {
         return actorRepository.findAll(pageable);
     }
 
-    // Retrieve a specific actor by ID
     public Actor getActorById(Long id) {
         return actorRepository.findById(id).orElseThrow(() ->
                 new ResourceNotFoundException("Actor with id " + id + " not found"));
     }
 
-    // Filter actors by name with pagination
     public Page<Actor> getActorsByName(String name, Pageable pageable) {
         Page<Actor> matchingActors = actorRepository.findByNameContainingIgnoreCase(name, pageable);
 
@@ -52,29 +48,23 @@ public class ActorService {
         return matchingActors;
     }
 
-    // Get movies by actor with pagination
     public Page<Movie> getMoviesByActor(Long actorId, Pageable pageable) {
-        // Check if the actor exists
         actorRepository.findById(actorId).orElseThrow(() ->
                 new ResourceNotFoundException("Actor with id " + actorId + " not found"));
 
-        // Fetch the movies associated with the actor in a paginated way
         return movieRepository.findByActors_Id(actorId, pageable);
     }
 
-    // Update actor details (PATCH method)
     public Optional<Actor> updateActor(Long id, Actor updatedActor) {
         Actor existingActor = actorRepository.findById(id).orElseThrow(() ->
                 new ResourceNotFoundException("Actor with id " + id + " not found"));
 
-        // Only update fields that are not null in updatedActor
         if (updatedActor.getName() != null) {
             existingActor.setName(updatedActor.getName());
         }
         if (updatedActor.getBirthDate() != null) {
             existingActor.setBirthDate(updatedActor.getBirthDate());
         }
-        // Update associated movies if any
         if (updatedActor.getMovies() != null) {
             existingActor.setMovies(updatedActor.getMovies());
         }
@@ -82,15 +72,12 @@ public class ActorService {
         return Optional.of(actorRepository.save(existingActor));
     }
 
-    // Remove an actor from the database
     public void deleteActor(Long id, boolean force) {
         Actor actor = actorRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Actor with id " + id + " not found"));
 
-        // Check for associated movies
         List<Movie> associatedActor = actor.getMovies().stream().toList();
 
-        // If force is false and there are associated movies, prevent deletion
         if (!force && !associatedActor.isEmpty()) {
             throw new IllegalStateException("Cannot delete actor '" + actor.getName() + 
                                             "' because it has " + associatedActor.size() + " associated movies.");
@@ -98,8 +85,8 @@ public class ActorService {
 
         if (force) {
             for (Movie movie : associatedActor) {
-                movie.getActors().remove(actor);  // Remove actor from movie's actor list
-                movieRepository.save(movie);      // Update movie in the database
+                movie.getActors().remove(actor);
+                movieRepository.save(movie);
             }
         }
         actorRepository.deleteById(id);

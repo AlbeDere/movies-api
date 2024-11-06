@@ -20,10 +20,9 @@ public class Genre {
     private String name;
 
     @ManyToMany(mappedBy = "genres")
-    @JsonIgnore // Prevents circular reference during serialization
+    @JsonIgnore
     private Set<Movie> movies = new HashSet<>();
 
-    // Constructors, Getters and Setters
     public Genre() {
     }
 

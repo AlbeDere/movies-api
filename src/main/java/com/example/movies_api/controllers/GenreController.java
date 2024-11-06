@@ -26,51 +26,43 @@ public class GenreController {
         this.genreService = genreService;
     }
 
-    // Create a new genre
     @PostMapping
     public ResponseEntity<Genre> createGenre(@Valid @RequestBody Genre genre) {
         Genre createdGenre = genreService.createGenre(genre);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdGenre); // HTTP 201 Created
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdGenre);
     }
 
-    // Retrieve all genres with pagination
     @GetMapping
     public ResponseEntity<List<Genre>> getAllGenres(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Genre> genres = genreService.getAllGenres(pageable);
-        return ResponseEntity.ok(genres.getContent()); // Returns paginated genres
+        return ResponseEntity.ok(genres.getContent());
     }
 
-    // Retrieve a specific genre by ID
     @GetMapping("/{id}")
     public ResponseEntity<Genre> getGenreById(@PathVariable Long id) {
-        Genre genre = genreService.getGenreById(id);  // Directly calls the service, which throws exception if not found
-        return ResponseEntity.ok(genre);  // If found, returns the genre
+        Genre genre = genreService.getGenreById(id);
+        return ResponseEntity.ok(genre);
     }
 
-    // Update an existing genre's name
     @PatchMapping("/{id}")
     public ResponseEntity<Genre> updateGenre(@PathVariable Long id, @Valid @RequestBody Genre genre) {
-        // Attempt to update the genre
         Optional<Genre> updatedGenre = genreService.updateGenre(id, genre.getName());
         
-        // Return updated genre with HTTP 200 OK if found, otherwise return HTTP 404 Not Found
-        return updatedGenre.map(ResponseEntity::ok) // HTTP 200 OK
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build()); // HTTP 404 Not Found
+        return updatedGenre.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
     
-
-    // Delete a genre with an option for forced deletion
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteGenre(@PathVariable Long id, 
                                             @RequestParam(defaultValue = "false") boolean force) {
         try {
             genreService.deleteGenre(id, force);
-            return ResponseEntity.noContent().build(); // HTTP 204 No Content for successful deletion
+            return ResponseEntity.noContent().build();
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage()); // HTTP 400 Bad Request for relationship conflict
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

@@ -40,7 +40,6 @@ public class Movie {
     )
     private Set<Actor> actors = new HashSet<>();
 
-    // Constructors, Getters and Setters
     public Movie() {
     }
 

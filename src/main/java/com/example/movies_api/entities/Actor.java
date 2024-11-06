@@ -29,7 +29,6 @@ public class Actor {
     @JsonIgnore
     private Set<Movie> movies = new HashSet<>();
 
-    // Constructors, Getters and Setters
     public Actor() {
     }
 

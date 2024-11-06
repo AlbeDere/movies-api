@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface ActorRepository extends JpaRepository<Actor, Long> {
     Page<Actor> findByNameContainingIgnoreCase(String name, Pageable pageable);
-    // Custom query to find actors by movie ID with pagination
     @Query("SELECT a FROM Actor a JOIN a.movies m WHERE m.id = :movieId")
     Page<Actor> findByMovieId(@Param("movieId") Long movieId, Pageable pageable);
 }

@@ -26,15 +26,12 @@ public class ActorController {
         this.actorService = actorService;
     }
 
-    // Create a new actor
     @PostMapping
     public ResponseEntity<Actor> createActor(@Valid @RequestBody Actor actor) {
         Actor createdActor = actorService.createActor(actor);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdActor); // HTTP 201 Created
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdActor);
     }
 
-    // Get all actors with pagination
-    // Get all actors or filter by name with pagination
     @GetMapping
     public ResponseEntity<List<Actor>> getAllActors(
             @RequestParam(required = false) String name,
@@ -52,39 +49,32 @@ public class ActorController {
         }
     }
 
-    // Retrieve a specific actor by ID
     @GetMapping("/{id}")
     public ResponseEntity<Actor> getActorById(@PathVariable Long id) {
-        Actor actor = actorService.getActorById(id); // Throws ResourceNotFoundException if not found
-        return ResponseEntity.ok(actor); // Directly return the actor
+        Actor actor = actorService.getActorById(id);
+        return ResponseEntity.ok(actor);
     }
 
-    // Update actor details
-// Update actor details
     @PatchMapping("/{id}")
     public ResponseEntity<Actor> updateActor(@PathVariable Long id, @Valid @RequestBody Actor updatedActor) {
-        // Attempt to update the actor
         Optional<Actor> actor = actorService.updateActor(id, updatedActor);
         
-        // Return updated actor with HTTP 200 OK if found, otherwise return HTTP 404 Not Found
-        return actor.map(ResponseEntity::ok) // HTTP 200 OK
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build()); // HTTP 404 Not Found
+        return actor.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
 
-    // Delete an actor
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteActor(@PathVariable Long id, 
                                             @RequestParam(defaultValue = "false") boolean force) {
         try {
             actorService.deleteActor(id, force);
-            return ResponseEntity.noContent().build(); // HTTP 204 No Content for successful deletion
+            return ResponseEntity.noContent().build();
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage()); // HTTP 400 Bad Request for relationship conflict
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // Get movies by actor with pagination
     @GetMapping("/{actorId}/movies")
     public ResponseEntity<List<Movie>> getMoviesByActor(@PathVariable Long actorId, Pageable pageable) {
         Page<Movie> movies = actorService.getMoviesByActor(actorId, pageable);
