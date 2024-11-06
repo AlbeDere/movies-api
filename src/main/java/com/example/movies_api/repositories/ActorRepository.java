@@ -1,10 +1,15 @@
 package com.example.movies_api.repositories;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.example.movies_api.entities.Actor;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ActorRepository extends JpaRepository<Actor, Long> {
-    List<Actor> findByNameContainingIgnoreCase(String name);
+    Page<Actor> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    // Custom query to find actors by movie ID with pagination
+    @Query("SELECT a FROM Actor a JOIN a.movies m WHERE m.id = :movieId")
+    Page<Actor> findByMovieId(@Param("movieId") Long movieId, Pageable pageable);
 }

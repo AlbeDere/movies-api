@@ -2,39 +2,75 @@ package com.example.movies_api.controllers;
 
 import com.example.movies_api.entities.Genre;
 import com.example.movies_api.services.GenreService;
+
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/genres")
 public class GenreController {
+
+    private final GenreService genreService;
+
     @Autowired
-    private GenreService genreService;
+    public GenreController(GenreService genreService) {
+        this.genreService = genreService;
+    }
 
+    // Create a new genre
     @PostMapping
-    public Genre createGenre(@RequestBody Genre genre) {
-        return genreService.createGenre(genre);
+    public ResponseEntity<Genre> createGenre(@Valid @RequestBody Genre genre) {
+        Genre createdGenre = genreService.createGenre(genre);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdGenre); // HTTP 201 Created
     }
 
+    // Retrieve all genres with pagination
     @GetMapping
-    public List<Genre> getAllGenres() {
-        return genreService.getAllGenres();
+    public ResponseEntity<List<Genre>> getAllGenres(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Genre> genres = genreService.getAllGenres(pageable);
+        return ResponseEntity.ok(genres.getContent()); // Returns paginated genres
     }
 
+    // Retrieve a specific genre by ID
     @GetMapping("/{id}")
-    public Genre getGenreById(@PathVariable Long id) {
-        return genreService.getGenreById(id);
+    public ResponseEntity<Genre> getGenreById(@PathVariable Long id) {
+        Genre genre = genreService.getGenreById(id);  // Directly calls the service, which throws exception if not found
+        return ResponseEntity.ok(genre);  // If found, returns the genre
     }
 
+    // Update an existing genre's name
     @PatchMapping("/{id}")
-    public Genre updateGenre(@PathVariable Long id, @RequestBody Genre updatedGenre) {
-        return genreService.updateGenre(id, updatedGenre);
+    public ResponseEntity<Genre> updateGenre(@PathVariable Long id, @Valid @RequestBody Genre genre) {
+        // Attempt to update the genre
+        Optional<Genre> updatedGenre = genreService.updateGenre(id, genre.getName());
+        
+        // Return updated genre with HTTP 200 OK if found, otherwise return HTTP 404 Not Found
+        return updatedGenre.map(ResponseEntity::ok) // HTTP 200 OK
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build()); // HTTP 404 Not Found
     }
+    
 
+    // Delete a genre with an option for forced deletion
     @DeleteMapping("/{id}")
-    public void deleteGenre(@PathVariable Long id) {
-        genreService.deleteGenre(id);
+    public ResponseEntity<String> deleteGenre(@PathVariable Long id, 
+                                            @RequestParam(defaultValue = "false") boolean force) {
+        try {
+            genreService.deleteGenre(id, force);
+            return ResponseEntity.noContent().build(); // HTTP 204 No Content for successful deletion
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage()); // HTTP 400 Bad Request for relationship conflict
+        }
     }
 }
