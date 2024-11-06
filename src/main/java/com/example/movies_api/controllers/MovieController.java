@@ -13,10 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/movies")
@@ -31,8 +29,8 @@ public class MovieController {
 
     @PostMapping
     public ResponseEntity<Movie> createMovie(@Valid @RequestBody Movie movie,
-                                             @RequestParam List<Long> genreIds,
-                                             @RequestParam List<Long> actorIds) {
+                                             @RequestParam(required = false) List<Long> genreIds,
+                                             @RequestParam(required = false) List<Long> actorIds) {
         Movie createdMovie = movieService.createMovie(movie, genreIds, actorIds);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie); // HTTP 201 Created
     }
@@ -89,10 +87,16 @@ public class MovieController {
         }
     }
 
+    // Get all actors in a specific movie with pagination
     @GetMapping("/{movieId}/actors")
-    public ResponseEntity<List<Actor>> getActorsByMovie(@PathVariable Long movieId) {
-        Set<Actor> actors = movieService.getActorsByMovie(movieId);
-        List<Actor> actorList = new ArrayList<>(actors);
-        return ResponseEntity.ok(actorList); // HTTP 200 OK
+    public ResponseEntity<List<Actor>> getActorsByMovie(
+            @PathVariable Long movieId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Actor> actors = movieService.getActorsByMovie(movieId, pageable);
+        
+        return ResponseEntity.ok(actors.getContent());
     }
 }

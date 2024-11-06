@@ -12,7 +12,6 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 public class ActorService {
@@ -42,25 +41,25 @@ public class ActorService {
                 new ResourceNotFoundException("Actor with id " + id + " not found"));
     }
 
-    // Filter actors by name
-    public List<Actor> getActorsByName(String name) {
-        List<Actor> matchingActors = actorRepository.findAll().stream()
-            .filter(actor -> actor.getName().toLowerCase().contains(name.toLowerCase()))
-            .toList();
+    // Filter actors by name with pagination
+    public Page<Actor> getActorsByName(String name, Pageable pageable) {
+        Page<Actor> matchingActors = actorRepository.findByNameContainingIgnoreCase(name, pageable);
 
         if (matchingActors.isEmpty()) {
             throw new ResourceNotFoundException("No actors found with name containing: " + name);
         }
-        
+
         return matchingActors;
     }
 
-    // Fetch all movies an actor has appeared in
-    public Set<Movie> getMoviesByActor(Long actorId) {
-        Actor actor = actorRepository.findById(actorId)
-            .orElseThrow(() -> new ResourceNotFoundException("Actor with id " + actorId + " not found"));
-        
-        return actor.getMovies();
+    // Get movies by actor with pagination
+    public Page<Movie> getMoviesByActor(Long actorId, Pageable pageable) {
+        // Check if the actor exists
+        actorRepository.findById(actorId).orElseThrow(() ->
+                new ResourceNotFoundException("Actor with id " + actorId + " not found"));
+
+        // Fetch the movies associated with the actor in a paginated way
+        return movieRepository.findByActors_Id(actorId, pageable);
     }
 
     // Update actor details (PATCH method)

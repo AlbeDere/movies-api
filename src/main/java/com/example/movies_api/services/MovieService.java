@@ -36,18 +36,26 @@ public class MovieService {
     // Create a new movie
     public Movie createMovie(Movie movie, List<Long> genreIds, List<Long> actorIds) {
         Set<Genre> genres = new HashSet<>();
-        for (Long genreId : genreIds) {
-            Genre genre = genreRepository.findById(genreId)
-                .orElseThrow(() -> new ResourceNotFoundException("Genre with id " + genreId + " not found"));
-            genres.add(genre);
+        
+        // If genreIds is provided and not empty, fetch and associate genres
+        if (genreIds != null) {
+            for (Long genreId : genreIds) {
+                Genre genre = genreRepository.findById(genreId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Genre with id " + genreId + " not found"));
+                genres.add(genre);
+            }
         }
         movie.setGenres(genres);
     
         Set<Actor> actors = new HashSet<>();
-        for (Long actorId : actorIds) {
-            Actor actor = actorRepository.findById(actorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Actor with id " + actorId + " not found"));
-            actors.add(actor);
+        
+        // If actorIds is provided and not empty, fetch and associate actors
+        if (actorIds != null) {
+            for (Long actorId : actorIds) {
+                Actor actor = actorRepository.findById(actorId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Actor with id " + actorId + " not found"));
+                actors.add(actor);
+            }
         }
         movie.setActors(actors);
     
@@ -87,11 +95,14 @@ public class MovieService {
     }
     
 
-    // Get all actors in a specific movie
-    public Set<Actor> getActorsByMovie(Long movieId) {
-        Movie movie = movieRepository.findById(movieId)
-            .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + movieId + " not found"));
-        return movie.getActors();
+    // Get paginated actors in a specific movie
+    public Page<Actor> getActorsByMovie(Long movieId, Pageable pageable) {
+        // Check if movie exists
+        movieRepository.findById(movieId)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + movieId + " not found"));
+        
+        // Fetch paginated actors by movie ID
+        return actorRepository.findByMovieId(movieId, pageable);
     }
     
     

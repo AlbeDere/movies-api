@@ -12,10 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/actors")
@@ -36,13 +34,22 @@ public class ActorController {
     }
 
     // Get all actors with pagination
+    // Get all actors or filter by name with pagination
     @GetMapping
     public ResponseEntity<List<Actor>> getAllActors(
+            @RequestParam(required = false) String name,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+
         Pageable pageable = PageRequest.of(page, size);
-        Page<Actor> actorPage = actorService.getAllActors(pageable);
-        return ResponseEntity.ok(actorPage.getContent()); // Returns only the content of the paginated actors
+
+        if (name != null) {
+            Page<Actor> actors = actorService.getActorsByName(name, pageable);
+            return ResponseEntity.ok(actors.getContent());
+        } else {
+            Page<Actor> actors = actorService.getAllActors(pageable);
+            return ResponseEntity.ok(actors.getContent());
+        }
     }
 
     // Retrieve a specific actor by ID
@@ -77,11 +84,10 @@ public class ActorController {
         }
     }
 
-    // Get all movies an actor has appeared in
+    // Get movies by actor with pagination
     @GetMapping("/{actorId}/movies")
-    public ResponseEntity<List<Movie>> getMoviesByActor(@PathVariable Long actorId) {
-        Set<Movie> movies = actorService.getMoviesByActor(actorId); // Throws ResourceNotFoundException if not found
-        List<Movie> movieList = new ArrayList<>(movies);
-        return ResponseEntity.ok(movieList);
+    public ResponseEntity<List<Movie>> getMoviesByActor(@PathVariable Long actorId, Pageable pageable) {
+        Page<Movie> movies = actorService.getMoviesByActor(actorId, pageable);
+        return ResponseEntity.ok(movies.getContent());
     }
 }
