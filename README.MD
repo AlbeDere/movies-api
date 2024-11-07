@@ -1,5 +1,10 @@
 # Movies API
 
+![Java](https://img.shields.io/badge/Java-17-blue)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-green)
+![Hibernate](https://img.shields.io/badge/Hibernate-ORM-yellow)
+![SQLite](https://img.shields.io/badge/SQLite-lightgrey)
+
 This project is a RESTful API built with Spring Boot, designed to manage a database of movies, actors, and genres. It provides endpoints for CRUD operations on movies, actors, and genres, allowing clients to search, create, update, and delete entries with associated relationships. This API also includes pagination, validation, and custom exception handling for robust error management.
 
 ## Features
