@@ -7,6 +7,23 @@
 
 This project is a RESTful API built with Spring Boot, designed to manage a database of movies, actors, and genres. It provides endpoints for CRUD operations on movies, actors, and genres, allowing clients to search, create, update, and delete entries with associated relationships. This API also includes pagination, validation, and custom exception handling for robust error management.
 
+## Table of Contents
+
+1. [Features](#features)
+2. [Technologies Used](#technologies-used)
+3. [Project Structure](#project-structure)
+4. [Endpoints](#endpoints)
+    - [Actor Endpoints](#actor-endpoints)
+    - [Genre Endpoints](#genre-endpoints)
+    - [Movie Endpoints](#movie-endpoints)
+5. [Error Handling](#error-handling)
+6. [OpenAPI (Swagger) Documentation](#openapi-swagger-documentation)
+7. [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+8. [License](#license)
+9. [Contact](#contact)
+
 ## Features
 
 - **Movies**: Create, update, delete, and search for movies with details like title, release year, duration, and associated actors and genres.
