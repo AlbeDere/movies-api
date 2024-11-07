@@ -42,12 +42,12 @@ public class MovieController {
             @RequestParam(required = false) Long genre,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Long actor,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size) {
         
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = (size != null) ? PageRequest.of(page, size) : Pageable.unpaged();
         Page<Movie> moviePage;
-
+    
         if (genre != null) {
             moviePage = movieService.getMoviesByGenre(genre, pageable);
         } else if (year != null) {
@@ -57,7 +57,7 @@ public class MovieController {
         } else {
             moviePage = movieService.getAllMovies(pageable);
         }
-        
+    
         return ResponseEntity.ok(moviePage.getContent());
     }
 
@@ -90,10 +90,10 @@ public class MovieController {
     @GetMapping("/{movieId}/actors")
     public ResponseEntity<List<Actor>> getActorsByMovie(
             @PathVariable Long movieId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size) {
+    
+        Pageable pageable = (size != null) ? PageRequest.of(page, size) : Pageable.unpaged();
         Page<Actor> actors = movieService.getActorsByMovie(movieId, pageable);
         
         return ResponseEntity.ok(actors.getContent());
@@ -102,30 +102,31 @@ public class MovieController {
     @GetMapping("/search")
     public ResponseEntity<?> searchMoviesByTitle(
             @RequestParam String title,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size) {
+    
         if (title == null || title.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Collections.singletonMap("message", "Title parameter cannot be empty."));
         }
-
-        Pageable pageable = PageRequest.of(page, size);
-
+    
+        Pageable pageable = (size != null) ? PageRequest.of(page, size) : Pageable.unpaged();
+    
         try {
             Page<Movie> moviePage = movieService.searchMoviesByTitle(title, pageable);
-
+    
             if (moviePage.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Collections.singletonMap("message", "No movies found matching the title: " + title));
             }
-
+    
             return ResponseEntity.ok(moviePage.getContent());
-
+    
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Collections.singletonMap("message", e.getMessage()));
         }
     }
+    
 
 }

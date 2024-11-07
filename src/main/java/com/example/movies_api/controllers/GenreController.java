@@ -34,9 +34,11 @@ public class GenreController {
 
     @GetMapping
     public ResponseEntity<List<Genre>> getAllGenres(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size) {
+        
+        Pageable pageable = (size != null) ? PageRequest.of(page, size) : Pageable.unpaged();
+    
         Page<Genre> genres = genreService.getAllGenres(pageable);
         return ResponseEntity.ok(genres.getContent());
     }

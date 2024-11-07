@@ -35,11 +35,11 @@ public class ActorController {
     @GetMapping
     public ResponseEntity<List<Actor>> getAllActors(
             @RequestParam(required = false) String name,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size) {
+    
+        Pageable pageable = (size != null) ? PageRequest.of(page, size) : Pageable.unpaged();
+    
         if (name != null) {
             Page<Actor> actors = actorService.getActorsByName(name, pageable);
             return ResponseEntity.ok(actors.getContent());
