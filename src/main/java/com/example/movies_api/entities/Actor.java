@@ -1,6 +1,7 @@
 package com.example.movies_api.entities;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import jakarta.persistence.*;
@@ -21,6 +22,7 @@ public class Actor {
     @Size(min = 1, max = 100, message = "Name must be between 1 and 100 characters")
     private String name;
 
+    @NotNull(message = "Birth date is required")
     @Past(message = "Birth date must be in the past")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate birthDate;
