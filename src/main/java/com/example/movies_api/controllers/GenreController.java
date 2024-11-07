@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/genres")
@@ -51,10 +50,8 @@ public class GenreController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<Genre> updateGenre(@PathVariable Long id, @Valid @RequestBody Genre genre) {
-        Optional<Genre> updatedGenre = genreService.updateGenre(id, genre.getName());
-        
-        return updatedGenre.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        Genre updatedGenre = genreService.updateGenre(id, genre.getName());
+        return ResponseEntity.ok(updatedGenre);
     }
     
     @DeleteMapping("/{id}")
