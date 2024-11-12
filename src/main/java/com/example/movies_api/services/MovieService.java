@@ -1,5 +1,6 @@
 package com.example.movies_api.services;
 
+import com.example.movies_api.dto.MovieUpdateDTO;
 import com.example.movies_api.entities.Actor;
 import com.example.movies_api.entities.Genre;
 import com.example.movies_api.entities.Movie;
@@ -63,69 +64,77 @@ public class MovieService {
         return movieRepository.findAll(pageable);
     }
 
-    public Movie getMovieById(Long id) {
-        return movieRepository.findById(id).orElseThrow(() -> 
-        new ResourceNotFoundException("Movie with id " + id + " not found"));
-}
-
-    public Page<Movie> getMoviesByGenre(Long genreId, Pageable pageable) {
-        genreRepository.findById(genreId).orElseThrow(() -> 
-            new ResourceNotFoundException("Genre with id " + genreId + " not found"));
-        return movieRepository.findByGenres_Id(genreId, pageable);
+    public Optional<Movie> getMovieById(Long id) {
+        return movieRepository.findById(id);
     }
-    
 
-    public Page<Movie> getMoviesByReleaseYear(int releaseYear, Pageable pageable) {
+    public Optional<Page<Movie>> getMoviesByGenre(Long genreId, Pageable pageable) {
+        Optional<Genre> genre = genreRepository.findById(genreId);
+        if (genre.isPresent()) {
+            return Optional.of(movieRepository.findByGenres_Id(genreId, pageable));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<Page<Movie>> getMoviesByReleaseYear(int releaseYear, Pageable pageable) {
         Page<Movie> movies = movieRepository.findByReleaseYear(releaseYear, pageable);
-        
-        if (movies.isEmpty()) {
-            throw new ResourceNotFoundException("No movies found for release year " + releaseYear);
-        }
-        
-        return movies;
+        return movies.isEmpty() ? Optional.empty() : Optional.of(movies);
     }
-    
 
-    public Page<Actor> getActorsByMovie(Long movieId, Pageable pageable) {
-        movieRepository.findById(movieId)
-                .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + movieId + " not found"));
-        
-        return actorRepository.findByMovieId(movieId, pageable);
+    public Optional<Page<Actor>> getActorsByMovie(Long movieId, Pageable pageable) {
+        Optional<Movie> movie = movieRepository.findById(movieId);
+        if (movie.isPresent()) {
+            return Optional.of(actorRepository.findByMovieId(movieId, pageable));
+        } else {
+            return Optional.empty();
+        }
     }
-    
-    
-    public Page<Movie> getMoviesByActor(Long actorId, Pageable pageable) {
-        actorRepository.findById(actorId).orElseThrow(() -> 
-            new ResourceNotFoundException("Actor with id " + actorId + " not found"));
-        return movieRepository.findByActors_Id(actorId, pageable);
-    }
-    
 
-    public Optional<Movie> updateMovie(Long id, Movie updatedMovie, List<Long> genreIds, List<Long> actorIds) {
-        Movie existingMovie = movieRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + id + " not found"));
-    
-        existingMovie.setTitle(updatedMovie.getTitle());
-        existingMovie.setReleaseYear(updatedMovie.getReleaseYear());
-        existingMovie.setDuration(updatedMovie.getDuration());
-    
-        Set<Genre> genres = new HashSet<>();
-        for (Long genreId : genreIds) {
-            Genre genre = genreRepository.findById(genreId)
-                .orElseThrow(() -> new ResourceNotFoundException("Genre with id " + genreId + " not found"));
-            genres.add(genre);
+    public Optional<Page<Movie>> getMoviesByActor(Long actorId, Pageable pageable) {
+        Optional<Actor> actor = actorRepository.findById(actorId);
+        if (actor.isPresent()) {
+            return Optional.of(movieRepository.findByActors_Id(actorId, pageable));
+        } else {
+            return Optional.empty();
         }
-        existingMovie.setGenres(genres);
-    
-        Set<Actor> actors = new HashSet<>();
-        for (Long actorId : actorIds) {
-            Actor actor = actorRepository.findById(actorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Actor with id " + actorId + " not found"));
-            actors.add(actor);
+    }
+
+    public Optional<Movie> updateMovie(Long id, MovieUpdateDTO movieUpdateDTO) {
+        Optional<Movie> existingMovie = movieRepository.findById(id);
+        if (existingMovie.isPresent()) {
+            Movie movie = existingMovie.get();
+            movie.setTitle(movieUpdateDTO.getTitle());
+            movie.setReleaseYear(movieUpdateDTO.getReleaseYear());
+            movie.setDuration(movieUpdateDTO.getDuration());
+
+            Set<Genre> genres = new HashSet<>();
+            if (movieUpdateDTO.getGenreNames() != null) {
+                for (String genreName : movieUpdateDTO.getGenreNames()) {
+                    Genre genre = genreRepository.findByName(genreName)
+                        .orElseThrow(() -> new ResourceNotFoundException("Genre with name " + genreName + " not found"));
+                    genres.add(genre);
+                }
+            }
+            movie.setGenres(genres);
+
+            if (movieUpdateDTO.getActorNames() == null) {
+            } else if (movieUpdateDTO.getActorNames().isEmpty()) {
+                movie.getActors().clear();
+            } else {
+                Set<Actor> actors = new HashSet<>();
+                for (String actorName : movieUpdateDTO.getActorNames()) {
+                    Actor actor = actorRepository.findByName(actorName)
+                        .orElseThrow(() -> new ResourceNotFoundException("Actor with name " + actorName + " not found"));
+                    actors.add(actor);
+                }
+                movie.setActors(actors);
+            }
+
+            return Optional.of(movieRepository.save(movie));
+        } else {
+            return Optional.empty();
         }
-        existingMovie.setActors(actors);
-    
-        return Optional.of(movieRepository.save(existingMovie));
     }
 
     public void deleteMovie(Long id, boolean force) {
@@ -160,13 +169,9 @@ public class MovieService {
 
         movieRepository.deleteById(id);
     }
-    public Page<Movie> searchMoviesByTitle(String title, Pageable pageable) {
+
+    public Optional<Page<Movie>> searchMoviesByTitle(String title, Pageable pageable) {
         Page<Movie> movies = movieRepository.findByTitleContainingIgnoreCase(title, pageable);
-    
-        if (movies.isEmpty()) {
-            throw new ResourceNotFoundException("No movies found matching the title: " + title);
-        }
-    
-        return movies;
+        return movies.isEmpty() ? Optional.empty() : Optional.of(movies);
     }
 }

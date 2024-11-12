@@ -1,6 +1,7 @@
 package com.example.movies_api.controllers;
 
 import com.example.movies_api.entities.Genre;
+import com.example.movies_api.exceptions.InvalidPaginationException;
 import com.example.movies_api.services.GenreService;
 
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/genres")
@@ -36,16 +38,22 @@ public class GenreController {
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false) Integer size) {
         
+        if (page < 0 || (size != null && size <= 0)) {
+            throw new InvalidPaginationException("Invalid pagination parameters: page must be non-negative and size must be positive.");
+        }
+        
         Pageable pageable = (size != null) ? PageRequest.of(page, size) : Pageable.unpaged();
-    
         Page<Genre> genres = genreService.getAllGenres(pageable);
+        
         return ResponseEntity.ok(genres.getContent());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Genre> getGenreById(@PathVariable Long id) {
-        Genre genre = genreService.getGenreById(id);
-        return ResponseEntity.ok(genre);
+        Optional<Genre> genre = genreService.getGenreById(id);
+        
+        return genre.map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}")
@@ -56,7 +64,7 @@ public class GenreController {
     
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteGenre(@PathVariable Long id, 
-                                            @RequestParam(defaultValue = "false") boolean force) {
+                                              @RequestParam(defaultValue = "false") boolean force) {
         try {
             genreService.deleteGenre(id, force);
             return ResponseEntity.noContent().build();

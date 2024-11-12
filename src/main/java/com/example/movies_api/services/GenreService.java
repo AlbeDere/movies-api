@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class GenreService {
@@ -32,9 +33,8 @@ public class GenreService {
         return genreRepository.findAll(pageable);
     }
 
-    public Genre getGenreById(Long id) {
-        return genreRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Genre with id " + id + " not found"));
+    public Optional<Genre> getGenreById(Long id) {
+        return genreRepository.findById(id);
     }
 
     public Genre updateGenre(Long id, String newName) {
