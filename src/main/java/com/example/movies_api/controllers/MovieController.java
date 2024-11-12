@@ -1,7 +1,9 @@
 package com.example.movies_api.controllers;
 
+import com.example.movies_api.dto.MovieUpdateDTO;
 import com.example.movies_api.entities.Actor;
 import com.example.movies_api.entities.Movie;
+import com.example.movies_api.exceptions.InvalidPaginationException;
 import com.example.movies_api.exceptions.ResourceNotFoundException;
 import com.example.movies_api.services.MovieService;
 import jakarta.validation.Valid;
@@ -44,40 +46,46 @@ public class MovieController {
             @RequestParam(required = false) Long actor,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false) Integer size) {
-        
+
+        if (page < 0 || (size != null && size <= 0)) {
+            throw new InvalidPaginationException("Invalid pagination parameters: page must be non-negative and size must be positive.");
+        }
+
         Pageable pageable = (size != null) ? PageRequest.of(page, size) : Pageable.unpaged();
         Page<Movie> moviePage;
-    
+
         if (genre != null) {
-            moviePage = movieService.getMoviesByGenre(genre, pageable);
+            moviePage = movieService.getMoviesByGenre(genre, pageable).orElseThrow(() ->
+                new ResourceNotFoundException("No movies found for genre " + genre));
         } else if (year != null) {
-            moviePage = movieService.getMoviesByReleaseYear(year, pageable);
+            moviePage = movieService.getMoviesByReleaseYear(year, pageable).orElseThrow(() ->
+                new ResourceNotFoundException("No movies found for year " + year));
         } else if (actor != null) {
-            moviePage = movieService.getMoviesByActor(actor, pageable);
+            moviePage = movieService.getMoviesByActor(actor, pageable).orElseThrow(() ->
+                new ResourceNotFoundException("No movies found for actor " + actor));
         } else {
             moviePage = movieService.getAllMovies(pageable);
         }
-    
+
         return ResponseEntity.ok(moviePage.getContent());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Movie> getMovieById(@PathVariable Long id) {
-        Movie movie = movieService.getMovieById(id);
+        Movie movie = movieService.getMovieById(id).orElseThrow(() ->
+            new ResourceNotFoundException("Movie with id " + id + " not found"));
         return ResponseEntity.ok(movie);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Movie> updateMovie(@PathVariable Long id, @Valid @RequestBody Movie updatedMovie,
-                                             @RequestParam List<Long> genreIds,
-                                             @RequestParam List<Long> actorIds) {
-        Optional<Movie> movie = movieService.updateMovie(id, updatedMovie, genreIds, actorIds);
+    public ResponseEntity<Movie> updateMovie(@PathVariable Long id, @Valid @RequestBody MovieUpdateDTO movieUpdateDTO) {
+        Optional<Movie> movie = movieService.updateMovie(id, movieUpdateDTO);
         return movie.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteMovie(@PathVariable Long id, 
+    public ResponseEntity<String> deleteMovie(@PathVariable Long id,
                                               @RequestParam(defaultValue = "false") boolean force) {
         try {
             movieService.deleteMovie(id, force);
@@ -92,10 +100,15 @@ public class MovieController {
             @PathVariable Long movieId,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false) Integer size) {
-    
+
+        if (page < 0 || (size != null && size <= 0)) {
+            throw new InvalidPaginationException("Invalid pagination parameters: page must be non-negative and size must be positive.");
+        }
+
         Pageable pageable = (size != null) ? PageRequest.of(page, size) : Pageable.unpaged();
-        Page<Actor> actors = movieService.getActorsByMovie(movieId, pageable);
-        
+        Page<Actor> actors = movieService.getActorsByMovie(movieId, pageable).orElseThrow(() ->
+            new ResourceNotFoundException("No actors found for movie with id " + movieId));
+
         return ResponseEntity.ok(actors.getContent());
     }
 
@@ -104,29 +117,27 @@ public class MovieController {
             @RequestParam String title,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false) Integer size) {
-    
+
         if (title == null || title.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Collections.singletonMap("message", "Title parameter cannot be empty."));
         }
-    
+
+        if (page < 0 || (size != null && size <= 0)) {
+            throw new InvalidPaginationException("Invalid pagination parameters: page must be non-negative and size must be positive.");
+        }
+
         Pageable pageable = (size != null) ? PageRequest.of(page, size) : Pageable.unpaged();
-    
+
         try {
-            Page<Movie> moviePage = movieService.searchMoviesByTitle(title, pageable);
-    
-            if (moviePage.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("message", "No movies found matching the title: " + title));
-            }
-    
+            Page<Movie> moviePage = movieService.searchMoviesByTitle(title, pageable).orElseThrow(() ->
+                new ResourceNotFoundException("No movies found matching the title: " + title));
+
             return ResponseEntity.ok(moviePage.getContent());
-    
+
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Collections.singletonMap("message", e.getMessage()));
         }
     }
-    
-
 }

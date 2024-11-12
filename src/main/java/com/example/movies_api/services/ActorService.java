@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class ActorService {
@@ -33,9 +33,8 @@ public class ActorService {
         return actorRepository.findAll(pageable);
     }
 
-    public Actor getActorById(Long id) {
-        return actorRepository.findById(id).orElseThrow(() ->
-                new ResourceNotFoundException("Actor with id " + id + " not found"));
+    public Optional<Actor> getActorById(Long id) {
+        return actorRepository.findById(id);
     }
 
     public Page<Actor> getActorsByName(String name, Pageable pageable) {
@@ -49,43 +48,51 @@ public class ActorService {
     }
 
     public Page<Movie> getMoviesByActor(Long actorId, Pageable pageable) {
-        actorRepository.findById(actorId).orElseThrow(() ->
-                new ResourceNotFoundException("Actor with id " + actorId + " not found"));
+        Optional<Actor> actor = actorRepository.findById(actorId);
+        if (actor.isEmpty()) {
+            throw new ResourceNotFoundException("Actor with id " + actorId + " not found");
+        }
 
         return movieRepository.findByActors_Id(actorId, pageable);
     }
 
     public Optional<Actor> updateActor(Long id, Actor updatedActor) {
-        Actor existingActor = actorRepository.findById(id).orElseThrow(() ->
-                new ResourceNotFoundException("Actor with id " + id + " not found"));
+        Optional<Actor> existingActor = actorRepository.findById(id);
+        if (existingActor.isEmpty()) {
+            throw new ResourceNotFoundException("Actor with id " + id + " not found");
+        }
+
+        Actor actorToUpdate = existingActor.get();
 
         if (updatedActor.getName() != null) {
-            existingActor.setName(updatedActor.getName());
+            actorToUpdate.setName(updatedActor.getName());
         }
         if (updatedActor.getBirthDate() != null) {
-            existingActor.setBirthDate(updatedActor.getBirthDate());
+            actorToUpdate.setBirthDate(updatedActor.getBirthDate());
         }
         if (updatedActor.getMovies() != null) {
-            existingActor.setMovies(updatedActor.getMovies());
+            actorToUpdate.setMovies(updatedActor.getMovies());
         }
 
-        return Optional.of(actorRepository.save(existingActor));
+        return Optional.of(actorRepository.save(actorToUpdate));
     }
 
     public void deleteActor(Long id, boolean force) {
-        Actor actor = actorRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Actor with id " + id + " not found"));
+        Optional<Actor> actor = actorRepository.findById(id);
+        if (actor.isEmpty()) {
+            throw new ResourceNotFoundException("Actor with id " + id + " not found");
+        }
 
-        List<Movie> associatedActor = actor.getMovies().stream().toList();
+        Set<Movie> associatedActor = actor.get().getMovies();
 
         if (!force && !associatedActor.isEmpty()) {
-            throw new IllegalStateException("Cannot delete actor '" + actor.getName() + 
+            throw new IllegalStateException("Cannot delete actor '" + actor.get().getName() + 
                                             "' because it has " + associatedActor.size() + " associated movies.");
         }
 
         if (force) {
             for (Movie movie : associatedActor) {
-                movie.getActors().remove(actor);
+                movie.getActors().remove(actor.get());
                 movieRepository.save(movie);
             }
         }
